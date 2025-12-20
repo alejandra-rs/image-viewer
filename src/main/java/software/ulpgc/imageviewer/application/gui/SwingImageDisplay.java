@@ -46,6 +46,16 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
         paintForeground(g);
     }
 
+    @Override
+    public void on(Shift shift) {
+        this.shift = shift;
+    }
+
+    @Override
+    public void on(Released released) {
+        this.released = released;
+    }
+
     private void paintBackground(Graphics g) {
         g.setColor(Color.GRAY);
         g.fillRect(0,0,this.getWidth(), this.getHeight());
@@ -118,38 +128,7 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
 
         @Override
         public void mouseMoved(MouseEvent e) {}
-    }
 
-    @Override
-    public void on(Shift shift) {
-        this.shift = shift;
-    }
-
-    @Override
-    public void on(Released released) {
-        this.released = released;
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

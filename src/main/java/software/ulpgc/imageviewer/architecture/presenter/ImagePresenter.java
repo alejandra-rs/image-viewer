@@ -35,5 +35,4 @@ public class ImagePresenter {
     public Image image() {
         return image;
     }
-
 }

@@ -2,6 +2,7 @@ package software.ulpgc.imageviewer.architecture.model;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class ImageProvider {
@@ -45,5 +46,11 @@ public class ImageProvider {
                 return index == 0 ? load(size - 1, loader) : load(index - 1, loader);
             }
         };
+    }
+
+    public Image[] all(Function<String, byte[]> loader) {
+        return IntStream.range(0, images.size())
+                        .mapToObj(i -> load(i, loader))
+                        .toArray(Image[]::new);
     }
 }

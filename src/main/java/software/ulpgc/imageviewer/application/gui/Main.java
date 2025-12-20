@@ -1,10 +1,12 @@
 package software.ulpgc.imageviewer.application.gui;
 
 import software.ulpgc.imageviewer.application.FileImageStore;
+import software.ulpgc.imageviewer.architecture.control.GalleryCommand;
 import software.ulpgc.imageviewer.architecture.control.NextCommand;
 import software.ulpgc.imageviewer.architecture.control.PrevCommand;
 import software.ulpgc.imageviewer.architecture.io.ImageStore;
 import software.ulpgc.imageviewer.architecture.model.ImageProvider;
+import software.ulpgc.imageviewer.architecture.presenter.GalleryPresenter;
 import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
 
 import java.io.File;
@@ -20,11 +22,16 @@ public class Main {
         ImageProvider imageProvider = ImageProvider.with(store.images());
         SwingImageDisplay imageDisplay = new SwingImageDisplay();
         ImagePresenter imagePresenter = new ImagePresenter(imageDisplay);
+        SwingGalleryDisplay swingGalleryDisplay = new SwingGalleryDisplay();
+        GalleryPresenter galleryPresenter = new GalleryPresenter(swingGalleryDisplay, imageProvider.all(Main::readImage));
         imagePresenter.show(imageProvider.first(Main::readImage));
-        Desktop.create(imageDisplay)
+        Desktop desktop = Desktop.create(imageDisplay, swingGalleryDisplay)
                 .put("next", new NextCommand(imagePresenter))
                 .put("prev", new PrevCommand(imagePresenter))
-                .setVisible(true);
+                .put("gallery", new GalleryCommand(galleryPresenter));
+
+        swingGalleryDisplay.setListener(desktop.viewer(imagePresenter));
+        desktop.setVisible(true);
     }
 
     private static byte[] readImage(String id) {
