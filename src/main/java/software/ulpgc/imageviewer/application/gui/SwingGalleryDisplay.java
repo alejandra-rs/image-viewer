@@ -6,6 +6,8 @@ import software.ulpgc.imageviewer.architecture.ui.GalleryDisplay;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
 
@@ -33,8 +35,12 @@ public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
         imageGrid.repaint();
     }
 
+    private final Map<Image, ImageIcon> thumbnailCache = new HashMap<>();
     private JButton createThumbnailButton(Image img) {
-        ImageIcon icon = new ImageIcon(scale(img.bitmap()));
+        ImageIcon icon = thumbnailCache.computeIfAbsent(img, i ->
+                new ImageIcon(scale(i.bitmap()))
+        );
+
         JButton button = new JButton(icon);
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
@@ -42,6 +48,7 @@ public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
         button.addActionListener(listener);
         return button;
     }
+
 
     private java.awt.Image scale(byte[] bitmap) {
         return new ImageIcon(bitmap).getImage()

@@ -1,17 +1,16 @@
 package software.ulpgc.imageviewer.application.gui;
 
 import software.ulpgc.imageviewer.architecture.control.Command;
-import software.ulpgc.imageviewer.architecture.presenter.GalleryPresenter;
 import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
-import software.ulpgc.imageviewer.architecture.ui.GalleryDisplay;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+
+import software.ulpgc.imageviewer.architecture.model.Image;
 
 import static java.awt.BorderLayout.*;
 import static java.awt.FlowLayout.CENTER;
@@ -21,28 +20,36 @@ public class Desktop extends JFrame {
     private final Map<String, Command> commands;
     private final JPanel cards = new JPanel(new CardLayout());
 
-    public static Desktop create(SwingImageDisplay imageDisplay, SwingGalleryDisplay galleryDisplay) throws IOException {
-        return new Desktop(imageDisplay, galleryDisplay);
+    public static Desktop create() {
+        return new Desktop();
     }
 
-    private Desktop(SwingImageDisplay imageDisplay, SwingGalleryDisplay galleryDisplay) throws HeadlessException {
+    private Desktop() throws HeadlessException {
         this.commands = new HashMap<>();
         this.setTitle("Image Viewer");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(800, 600);
         this.setLayout(new BorderLayout());
-
-        cards.add(imageDisplay, "viewer");
-        cards.add(galleryDisplay, "gallery");
-
         this.setLocationRelativeTo(null);
-        this.getContentPane().add(cards, BorderLayout.CENTER);
-        this.createToolbar();
     }
 
-    private void createToolbar() {
-        this.getContentPane().add(toolbar(), SOUTH);
+    public Desktop generateUi(SwingImageDisplay imageDisplay, SwingGalleryDisplay galleryDisplay) {
+        cards.add(galleryDisplay, "gallery");
+        cards.add(viewerWith(imageDisplay), "viewer");
+
+        this.getContentPane().add(cards, BorderLayout.CENTER);
+        commands.get("gallery").execute();
+
+        return this;
     }
+
+    private JPanel viewerWith(SwingImageDisplay imageDisplay) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(imageDisplay, BorderLayout.CENTER);
+        panel.add(toolbar(), SOUTH);
+        return panel;
+    }
+
 
     private JPanel toolbar() {
         JPanel panel = new JPanel(new FlowLayout(CENTER));
@@ -54,7 +61,7 @@ public class Desktop extends JFrame {
 
     public ActionListener viewer(ImagePresenter presenter) {
         return e -> {
-            software.ulpgc.imageviewer.architecture.model.Image image = (software.ulpgc.imageviewer.architecture.model.Image)((JButton) (e.getSource())).getClientProperty("image");
+            Image image = (Image)((JButton) (e.getSource())).getClientProperty("image");
             presenter.show(image);
             showCard("viewer");
         };
@@ -104,11 +111,11 @@ public class Desktop extends JFrame {
         return new ImageIcon(scaledImageIn(resource));
     }
 
-    private static Image scaledImageIn(URL resource) {
+    private static java.awt.Image scaledImageIn(URL resource) {
         return scale(new ImageIcon(resource).getImage());
     }
 
-    private static Image scale(Image image) {
+    private static java.awt.Image scale(java.awt.Image image) {
         return image.getScaledInstance(16, 16, SCALE_SMOOTH);
     }
 }
