@@ -52,15 +52,19 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
     }
 
     private void paintForeground(Graphics g) {
-        Arrays.stream(paints).forEach(p -> paintImage(p, g));
+        Arrays.stream(paints).forEach(p -> drawPaint(p, g));
     }
 
-    private void paintImage(Paint image, Graphics g) {
-        BufferedImage bitmap = toBufferedImage(image.bitmap());
-        Canvas canvas = Canvas.ofSize(this.getWidth(), this.getHeight())
-                              .fit(bitmap.getWidth(), bitmap.getHeight());
-        g.drawImage(bitmap, x(canvas.width()) + image.offset(), y(canvas.height()),
+    private void drawPaint(Paint paint, Graphics g) {
+        BufferedImage bitmap = toBufferedImage(paint.bitmap());
+        Canvas canvas = fitToWindow(bitmap);
+        g.drawImage(bitmap, x(canvas.width()) + paint.offset(), y(canvas.height()),
                     canvas.width(), canvas.height(), null);
+    }
+
+    private Canvas fitToWindow(BufferedImage bitmap) {
+        return Canvas.ofSize(this.getWidth(), this.getHeight())
+                .fit(bitmap.getWidth(), bitmap.getHeight());
     }
 
     private int x(int width) {
