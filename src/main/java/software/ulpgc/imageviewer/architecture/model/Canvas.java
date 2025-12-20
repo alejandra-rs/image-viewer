@@ -7,14 +7,11 @@ public record Canvas(int width, int height) {
     }
 
     public Canvas fit(int width, int height) {
-        if (width <= this.width && height <= this.height) return new Canvas(width, height);
-        return ratio(width, height) > ratio(this.width, this.height) ?
-                Canvas.ofSize(this.width, height * this.width / width) :
-                Canvas.ofSize(width * this.height / height, this.height);
+        return Canvas.ofSize((int) (width * ratio(width, height)),
+                             (int) (height * ratio(width, height)));
     }
 
     private double ratio(int width, int height) {
-        return width / (double) height;
+        return height >= width ? this.height / (double) height : this.width / (double) width;
     }
-
 }
