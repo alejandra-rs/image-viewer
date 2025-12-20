@@ -5,11 +5,13 @@ import software.ulpgc.imageviewer.architecture.control.Command;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.awt.BorderLayout.SOUTH;
 import static java.awt.FlowLayout.CENTER;
+import static java.awt.Image.SCALE_SMOOTH;
 
 public class Desktop extends JFrame {
     private final Map<String, Command> commands;
@@ -36,13 +38,13 @@ public class Desktop extends JFrame {
 
     private JPanel toolbar() {
         JPanel panel = new JPanel(new FlowLayout(CENTER));
-        panel.add(button("prev"));
-        panel.add(button("next"));
+        panel.add(buttonWith("/prev.png","prev"));
+        panel.add(buttonWith("/next.png","next"));
         return panel;
     }
 
-    private JButton button(String name) {
-        JButton button = new JButton(name);
+    private JButton buttonWith(String resourcePath, String name) {
+        JButton button = buttonWith(Desktop.class.getResource(resourcePath));
         button.addActionListener(_ -> commands.get(name).execute());
         return button;
     }
@@ -50,6 +52,18 @@ public class Desktop extends JFrame {
     public Desktop put(String name, Command command) {
         commands.put(name, command);
         return this;
+    }
+
+    private static JButton buttonWith(URL resource) {
+        return buttonWith(new ImageIcon(resource));
+    }
+
+    private static JButton buttonWith(ImageIcon imageIcon) {
+        return buttonWith(imageIcon.getImage().getScaledInstance(20, 20, SCALE_SMOOTH));
+    }
+
+    private static JButton buttonWith(Image image) {
+        return new JButton(new ImageIcon(image));
     }
 }
 
