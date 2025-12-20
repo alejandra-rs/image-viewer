@@ -1,4 +1,4 @@
-package software.ulpgc.imageviewer.architecture;
+package software.ulpgc.imageviewer.architecture.io;
 
 import java.util.stream.Stream;
 

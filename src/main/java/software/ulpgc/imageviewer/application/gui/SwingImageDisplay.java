@@ -1,7 +1,7 @@
 package software.ulpgc.imageviewer.application.gui;
 
-import software.ulpgc.imageviewer.architecture.Canvas;
-import software.ulpgc.imageviewer.architecture.ImageDisplay;
+import software.ulpgc.imageviewer.architecture.model.Canvas;
+import software.ulpgc.imageviewer.architecture.ui.ImageDisplay;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwingImageDisplay extends JPanel implements ImageDisplay {
+
     private Shift shift;
     private Released released;
     private Paint[] paints;
@@ -29,14 +30,45 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
     }
 
     @Override
+    public int width() {
+        return this.getWidth();
+    }
+
+    @Override
     public void paint(Paint... paints) {
         this.paints = paints;
         this.repaint();
     }
 
     @Override
-    public int width() {
-        return this.getWidth();
+    public void paint(Graphics g) {
+        paintBackground(g);
+        paintForeground(g);
+    }
+
+    private void paintBackground(Graphics g) {
+        g.setColor(Color.GRAY);
+        g.fillRect(0,0,this.getWidth(), this.getHeight());
+    }
+
+    private void paintForeground(Graphics g) {
+        Arrays.stream(paints).forEach(p -> paintImage(p, g));
+    }
+
+    private void paintImage(Paint image, Graphics g) {
+        BufferedImage bitmap = toBufferedImage(image.bitmap());
+        Canvas canvas = Canvas.ofSize(this.getWidth(), this.getHeight())
+                              .fit(bitmap.getWidth(), bitmap.getHeight());
+        g.drawImage(bitmap, x(canvas.width()) + image.offset(), y(canvas.height()),
+                    canvas.width(), canvas.height(), null);
+    }
+
+    private int x(int width) {
+        return (this.getWidth() - width) / 2;
+    }
+
+    private int y(int height) {
+        return (this.getHeight() - height) / 2;
     }
 
     private final Map<Integer, BufferedImage> images = new HashMap<>();
@@ -52,46 +84,13 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
         }
     }
 
-    @Override
-    public void paint(Graphics g) {
-        g.setColor(Color.GRAY);
-        g.fillRect(0,0,this.getWidth(), this.getHeight());
-        for (Paint paint : paints) {
-            BufferedImage bitmap = toBufferedImage(paint.bitmap());
-            Canvas canvas = Canvas.ofSize(this.getWidth(), this.getHeight())
-                    .fit(bitmap.getWidth(), bitmap.getHeight());
-            int x = (this.getWidth() - canvas.width()) / 2;
-            int y = (this.getHeight() - canvas.height()) / 2;
-            g.drawImage(bitmap, x+paint.offset(), y, canvas.width(), canvas.height(), null);
-        }
-    }
-
     private class MouseAdapter implements MouseListener, MouseMotionListener {
+
         private int x;
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-
-        }
 
         @Override
         public void mousePressed(MouseEvent e) {
             x =  e.getX();
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            SwingImageDisplay.this.released.offset(e.getX() - x);
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-
         }
 
         @Override
@@ -100,9 +99,21 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
         }
 
         @Override
-        public void mouseMoved(MouseEvent e) {
-
+        public void mouseReleased(MouseEvent e) {
+            SwingImageDisplay.this.released.offset(e.getX() - x);
         }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {}
+
+        @Override
+        public void mouseEntered(MouseEvent e) {}
+
+        @Override
+        public void mouseExited(MouseEvent e) {}
+
+        @Override
+        public void mouseMoved(MouseEvent e) {}
     }
 
     @Override
@@ -114,8 +125,6 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
     public void on(Released released) {
         this.released = released;
     }
-
-
 
 }
 

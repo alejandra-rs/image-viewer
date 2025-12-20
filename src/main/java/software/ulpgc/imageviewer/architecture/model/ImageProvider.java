@@ -1,4 +1,4 @@
-package software.ulpgc.imageviewer.architecture;
+package software.ulpgc.imageviewer.architecture.model;
 
 import java.util.List;
 import java.util.function.Function;

@@ -1,6 +1,6 @@
 package test;
 
-import software.ulpgc.imageviewer.architecture.Canvas;
+import software.ulpgc.imageviewer.architecture.model.Canvas;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

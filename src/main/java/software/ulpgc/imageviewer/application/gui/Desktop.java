@@ -1,6 +1,6 @@
 package software.ulpgc.imageviewer.application.gui;
 
-import software.ulpgc.imageviewer.architecture.Command;
+import software.ulpgc.imageviewer.architecture.control.Command;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +43,7 @@ public class Desktop extends JFrame {
 
     private JButton button(String name) {
         JButton button = new JButton(name);
-        button.addActionListener(e -> commands.get(name).execute());
+        button.addActionListener(_ -> commands.get(name).execute());
         return button;
     }
 

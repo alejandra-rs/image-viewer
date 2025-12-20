@@ -1,4 +1,4 @@
-package software.ulpgc.imageviewer.architecture;
+package software.ulpgc.imageviewer.architecture.ui;
 
 public interface ImageDisplay {
 
@@ -17,6 +17,6 @@ public interface ImageDisplay {
         void offset(int value);
     }
 
-    public record Paint(byte[] bitmap, int offset) {}
+    record Paint(byte[] bitmap, int offset) {}
 
 }
