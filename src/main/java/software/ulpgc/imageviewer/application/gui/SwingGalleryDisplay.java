@@ -24,49 +24,16 @@ public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
     private final JXList list;
     private ActionListener listener;
 
-    private final Map<Image, ImageIcon> thumbnailCache = new HashMap<>();
+    private final Map<Image, ImageIcon> icons = new HashMap<>();
 
     public SwingGalleryDisplay() {
         this.setLayout(new BorderLayout());
 
         list = new JXList(model);
-        list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        list.setVisibleRowCount(-1);
+        configureListHorizontalWrap();
+        configureListBehavior();
 
-        list.setCellRenderer((_, value, _, _, _) -> {
-            JButton button = createThumbnailButton((Image) value);
-
-            JPanel wrapper = new JPanel(new GridBagLayout());
-            wrapper.setOpaque(false);
-            wrapper.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            wrapper.add(button);
-
-            return wrapper;
-        });
-
-        list.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int index = list.locationToIndex(e.getPoint());
-                if (index >= 0 && listener != null) {
-                    Image img = model.get(index);
-                    listener.actionPerformed(
-                            new ActionEvent(img, ActionEvent.ACTION_PERFORMED, "thumbnailClick")
-                    );
-                }
-            }
-        });
-
-
-        JScrollPane scrollPane = new JScrollPane(list);
-        scrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
-
-        this.add(scrollPane);
-    }
-
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
+        this.add(scrollPaneWithImages());
     }
 
     @Override
@@ -75,26 +42,60 @@ public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
         Arrays.stream(images).forEach(model::addElement);
     }
 
-    private JButton createThumbnailButton(Image img) {
-        ImageIcon icon = thumbnailCache.computeIfAbsent(img, i ->
-                new ImageIcon(scale(i.bitmap()))
-        );
-
-        JButton button = new JButton(icon);
-
-        button.setPreferredSize(new Dimension(100, 100));
-        button.setMinimumSize(new Dimension(100, 100));
-        button.setMaximumSize(new Dimension(100, 100));
-        button.setHorizontalAlignment(SwingConstants.CENTER);
-        button.setVerticalAlignment(SwingConstants.CENTER);
-
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.putClientProperty("image", img);
-
-        return button;
+    public void setListener(ActionListener listener) {
+        this.listener = listener;
     }
 
+    private void configureListHorizontalWrap() {
+        list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        list.setVisibleRowCount(-1);
+    }
+
+    private void configureListBehavior() {
+        list.setCellRenderer((_, cell, _, _, _) -> render((Image) cell));
+        list.addMouseListener(mouseAdapter());
+    }
+
+    private JScrollPane scrollPaneWithImages() {
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
+        return scrollPane;
+    }
+
+    private JPanel render(Image image) {
+        return panelWithBorderFor(galleryImageWith(image));
+    }
+
+    private MouseAdapter mouseAdapter() {
+        return new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Image img = model.get(list.locationToIndex(e.getPoint()));
+                listener.actionPerformed(new ActionEvent(img, ActionEvent.ACTION_PERFORMED, "imageClick"));
+            }
+        };
+    }
+
+    private JPanel panelWithBorderFor(Component component) {
+        JPanel border = new JPanel();
+        border.add(component);
+        border.setOpaque(false);
+        border.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        return border;
+    }
+
+    private JLabel galleryImageWith(Image img) {
+        ImageIcon icon = icons.computeIfAbsent(img, i -> new ImageIcon(scale(i.bitmap())));
+        return labelWith(icon);
+    }
+
+    private JLabel labelWith(ImageIcon icon) {
+        JLabel label = new JLabel(icon);
+        label.setPreferredSize(new Dimension(100, 100));
+        label.setOpaque(false);
+        return label;
+    }
 
     private java.awt.Image scale(byte[] bitmap) {
         return scale(new ImageIcon(bitmap).getImage());
