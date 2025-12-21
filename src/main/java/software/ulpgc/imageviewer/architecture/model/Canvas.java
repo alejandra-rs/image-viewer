@@ -12,6 +12,8 @@ public record Canvas(int width, int height) {
     }
 
     private double ratio(int width, int height) {
-        return height >= width ? this.height / (double) height : this.width / (double) width;
+        return width / (double) height < this.width / (double) this.height ?
+               this.height / (double) height :
+               this.width / (double) width;
     }
 }

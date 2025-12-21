@@ -4,7 +4,6 @@ import software.ulpgc.imageviewer.application.FileImageStore;
 import software.ulpgc.imageviewer.architecture.control.GalleryCommand;
 import software.ulpgc.imageviewer.architecture.control.NextCommand;
 import software.ulpgc.imageviewer.architecture.control.PrevCommand;
-import software.ulpgc.imageviewer.architecture.io.ImageStore;
 import software.ulpgc.imageviewer.architecture.model.Image;
 import software.ulpgc.imageviewer.architecture.model.ImageProvider;
 import software.ulpgc.imageviewer.architecture.presenter.GalleryPresenter;

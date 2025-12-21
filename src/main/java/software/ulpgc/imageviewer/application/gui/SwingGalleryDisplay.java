@@ -7,10 +7,7 @@ import software.ulpgc.imageviewer.architecture.ui.GalleryDisplay;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +46,7 @@ public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
     private void configureListHorizontalWrap() {
         list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         list.setVisibleRowCount(-1);
-    }
+   }
 
     private void configureListBehavior() {
         list.setCellRenderer((_, cell, _, _, _) -> render((Image) cell));
@@ -58,9 +55,34 @@ public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
 
     private JScrollPane scrollPaneWithImages() {
         JScrollPane scrollPane = new JScrollPane(list);
+        setScrollingPoliciesOn(scrollPane);
+        setAdaptativeBorderOn(scrollPane);
+        return scrollPane;
+    }
+
+    private static void setScrollingPoliciesOn(JScrollPane scrollPane) {
         scrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
-        return scrollPane;
+    }
+
+    private void setAdaptativeBorderOn(JScrollPane scrollPane) {
+        JViewport viewport = scrollPane.getViewport();
+        viewport.addComponentListener(resizableBorderOn(viewport));
+    }
+
+    private ComponentAdapter resizableBorderOn(JViewport viewport) {
+        return new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                list.doLayout();
+                list.setBorder(BorderFactory.createEmptyBorder(0, padding(viewport), 0, padding(viewport)));
+                list.revalidate(); list.repaint();
+            }
+        };
+    }
+
+    private int padding(JViewport viewport) {
+        return viewport.getExtentSize().width % list.getCellBounds(0, 0).width / 2;
     }
 
     private JPanel render(Image image) {
