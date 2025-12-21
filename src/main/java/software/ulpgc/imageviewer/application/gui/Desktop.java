@@ -61,7 +61,7 @@ public class Desktop extends JFrame {
 
     public ActionListener viewer(ImagePresenter presenter) {
         return e -> {
-            Image image = (Image)((JButton) (e.getSource())).getClientProperty("image");
+            Image image = (Image) (e.getSource());
             presenter.show(image);
             showCard("viewer");
         };
