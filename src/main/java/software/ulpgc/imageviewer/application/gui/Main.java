@@ -13,29 +13,35 @@ import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class Main {
-    private static File root;
 
-    public static void main(String[] args) throws IOException {
-        root = new File("images");
+    private static final File root = new File("images");
 
-        ImageStore store = new FileImageStore(root);
-        ImageProvider imageProvider = ImageProvider.with(store.images());
+    public static void main(String[] args) {
+        FlatLightLaf.setup();
+
+        ImageProvider imageProvider = ImageProvider.with(new FileImageStore(root).images());
+
         SwingImageDisplay imageDisplay = new SwingImageDisplay();
-        ImagePresenter imagePresenter = new ImagePresenter(imageDisplay);
         SwingGalleryDisplay swingGalleryDisplay = new SwingGalleryDisplay();
 
+        ImagePresenter imagePresenter = new ImagePresenter(imageDisplay);
         imagePresenter.show(imageProvider.first(Main::readImage));
-        Image[] images = imageProvider.all(Main::readImage);
+
 
         Desktop desktop = Desktop.create()
                 .put("next", new NextCommand(imagePresenter))
                 .put("prev", new PrevCommand(imagePresenter))
-                .put("gallery", new GalleryCommand(new GalleryPresenter(swingGalleryDisplay, images)));
+                .put("gallery", new GalleryCommand(new GalleryPresenter(swingGalleryDisplay, allImagesFrom(imageProvider))));
 
-        swingGalleryDisplay.setListener(desktop.viewer(imagePresenter));
+        swingGalleryDisplay.setListener(desktop.switchToViewer(imagePresenter));
         desktop.generateUi(imageDisplay, swingGalleryDisplay).setVisible(true);
+    }
+
+    private static Image[] allImagesFrom(ImageProvider imageProvider) {
+        return imageProvider.all(Main::readImage);
     }
 
     private static byte[] readImage(String id) {
@@ -45,6 +51,5 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
-
 
 }

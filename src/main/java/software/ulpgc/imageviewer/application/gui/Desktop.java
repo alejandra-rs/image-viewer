@@ -5,6 +5,7 @@ import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.HashMap;
@@ -13,64 +14,68 @@ import java.util.Map;
 import software.ulpgc.imageviewer.architecture.model.Image;
 
 import static java.awt.BorderLayout.*;
-import static java.awt.FlowLayout.CENTER;
 import static java.awt.Image.SCALE_SMOOTH;
+import static software.ulpgc.imageviewer.application.gui.Desktop.ButtonFactory.buttonWith;
 
 public class Desktop extends JFrame {
     private final Map<String, Command> commands;
     private final JPanel cards = new JPanel(new CardLayout());
 
+    private Desktop() {
+        this.commands = new HashMap<>();
+        setWindowProperties();
+    }
+
     public static Desktop create() {
         return new Desktop();
     }
 
-    private Desktop() throws HeadlessException {
-        this.commands = new HashMap<>();
+    public Desktop generateUi(SwingImageDisplay imageDisplay, SwingGalleryDisplay galleryDisplay) {
+        addCards(imageDisplay, galleryDisplay);
+        commands.get("gallery").execute();
+        return this;
+    }
+
+    public ActionListener switchToViewer(ImagePresenter presenter) {
+        return e -> onGalleryImageSelected(presenter, e);
+    }
+
+    private void setWindowProperties() {
         this.setTitle("Image Viewer");
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(800, 600);
-        this.setLayout(new BorderLayout());
         this.setLocationRelativeTo(null);
     }
 
-    public Desktop generateUi(SwingImageDisplay imageDisplay, SwingGalleryDisplay galleryDisplay) {
+    private void addCards(SwingImageDisplay imageDisplay, SwingGalleryDisplay galleryDisplay) {
         cards.add(galleryDisplay, "gallery");
         cards.add(viewerWith(imageDisplay), "viewer");
-
-        this.getContentPane().add(cards, BorderLayout.CENTER);
-        commands.get("gallery").execute();
-
-        return this;
+        this.getContentPane().add(cards);
     }
 
     private JPanel viewerWith(SwingImageDisplay imageDisplay) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(imageDisplay, BorderLayout.CENTER);
+        panel.add(imageDisplay);
         panel.add(toolbar(), SOUTH);
         return panel;
     }
 
-
     private JPanel toolbar() {
-        JPanel panel = new JPanel(new FlowLayout(CENTER));
-        panel.add(buttonWith("prev.png","prev"));
-        panel.add(homeButton());
-        panel.add(buttonWith("next.png","next"));
+        JPanel panel = new JPanel();
+        panel.add(buttonWith("prev.png", _ -> commands.get("prev").execute()));
+        panel.add(buttonWith("home.png", _ -> showGallery()));
+        panel.add(buttonWith("next.png", _ -> commands.get("next").execute()));
         return panel;
     }
 
-    public ActionListener viewer(ImagePresenter presenter) {
-        return e -> {
-            Image image = (Image) (e.getSource());
-            presenter.show(image);
-            showCard("viewer");
-        };
+    private void showGallery() {
+        showCard("gallery");
+        commands.get("gallery").execute();
     }
 
-    private JButton homeButton() {
-        JButton button = buttonWith("home.png");
-        button.addActionListener(_ -> {showCard("gallery"); commands.get("gallery").execute();});
-        return button;
+    private void onGalleryImageSelected(ImagePresenter presenter, ActionEvent e) {
+        presenter.show((Image) (e.getSource()));
+        showCard("viewer");
     }
 
     private void showCard(String name) {
@@ -78,46 +83,48 @@ public class Desktop extends JFrame {
         layout.show(cards, name);
     }
 
-    private JButton buttonWith(String resourceName, String name) {
-        JButton button = buttonWith(resourceName);
-        button.addActionListener(_ -> commands.get(name).execute());
-        return button;
-    }
-
     public Desktop put(String name, Command command) {
         commands.put(name, command);
         return this;
     }
 
-    private static JButton buttonWith(String resource) {
-        JButton button = new JButton();
-        button.setIcon(iconIn("/icons/normal/" + resource));
-        button.setPressedIcon(iconIn("/icons/dimmed/" + resource));
-        setAppearance(button);
-        return button;
-    }
+    public static class ButtonFactory {
 
-    private static void setAppearance(JButton button) {
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-    }
+        public static JButton buttonWith(String resource, ActionListener listener) {
+            JButton button = setButtonWithIcon(resource);
+            button.addActionListener(listener);
+            return button;
+        }
 
-    private static ImageIcon iconIn(String resourcePath) {
-        return iconIn(Desktop.class.getResource(resourcePath));
-    }
+        private static JButton setButtonWithIcon(String resource) {
+            JButton button = new JButton();
+            button.setIcon(iconIn("/icons/normal/" + resource));
+            button.setPressedIcon(iconIn("/icons/dimmed/" + resource));
+            setAppearance(button);
+            return button;
+        }
 
-    private static ImageIcon iconIn(URL resource) {
-        return new ImageIcon(scaledImageIn(resource));
-    }
+        private static void setAppearance(JButton button) {
+            button.setBorderPainted(false);
+            button.setContentAreaFilled(false);
+            button.setPreferredSize(new Dimension(48, 28));
+        }
 
-    private static java.awt.Image scaledImageIn(URL resource) {
-        return scale(new ImageIcon(resource).getImage());
-    }
+        private static ImageIcon iconIn(String resourcePath) {
+            return iconIn(Desktop.class.getResource(resourcePath));
+        }
 
-    private static java.awt.Image scale(java.awt.Image image) {
-        return image.getScaledInstance(16, 16, SCALE_SMOOTH);
+        private static ImageIcon iconIn(URL resource) {
+            return new ImageIcon(scaledImageIn(resource));
+        }
+
+        private static java.awt.Image scaledImageIn(URL resource) {
+            return scale(new ImageIcon(resource).getImage());
+        }
+
+        private static java.awt.Image scale(java.awt.Image image) {
+            return image.getScaledInstance(16, 16, SCALE_SMOOTH);
+        }
+
     }
 }
-
-
