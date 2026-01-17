@@ -99,7 +99,6 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
     }
 
     private class MouseAdapter implements MouseListener, MouseMotionListener {
-
         private int x;
 
         @Override
@@ -128,7 +127,6 @@ public class SwingImageDisplay extends JPanel implements ImageDisplay {
 
         @Override
         public void mouseMoved(MouseEvent e) {}
-
     }
 
 }

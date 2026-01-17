@@ -1,130 +1,178 @@
 package software.ulpgc.imageviewer.application.gui;
 
-import org.jdesktop.swingx.JXList;
-import software.ulpgc.imageviewer.architecture.model.Canvas;
-import software.ulpgc.imageviewer.architecture.model.Image;
 import software.ulpgc.imageviewer.architecture.ui.GalleryDisplay;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.*;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import software.ulpgc.imageviewer.architecture.model.Canvas;
 
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
+import static java.awt.RenderingHints.*;
+import static java.util.Collections.synchronizedSet;
 
 public class SwingGalleryDisplay extends JPanel implements GalleryDisplay {
 
-    private final DefaultListModel<Image> model = new DefaultListModel<>();
-    private final JXList list;
-    private ActionListener listener;
+    private final Map<Integer, BufferedImage> thumbnails = new HashMap<>();
+    private final ExecutorService loaderService = Executors.newFixedThreadPool(4);
+    private final Set<Integer> pending = synchronizedSet(new HashSet<>());
 
-    private final Map<Image, ImageIcon> icons = new HashMap<>();
+    private List<Paint> paints = new ArrayList<>();
+    private Scroll scrollListener;
+    private Click clickListener;
+    private Resize resizeListener;
 
     public SwingGalleryDisplay() {
-        this.setLayout(new BorderLayout());
-
-        list = new JXList(model);
-        configureListHorizontalWrap();
-        configureListBehavior();
-
-        this.add(scrollPaneWithImages());
+        MouseAdapter mouseAdapter = new MouseAdapter();
+        this.addMouseListener(mouseAdapter);
+        this.addComponentListener(mouseAdapter);
+        this.addMouseWheelListener(mouseAdapter);
     }
 
     @Override
-    public void paint(Image... images) {
-        model.clear();
-        Arrays.stream(images).forEach(model::addElement);
+    public void paint(List<Paint> paints) {
+        this.paints = paints;
+        this.repaint();
     }
 
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        paints.forEach(paint -> render(g, paint));
     }
 
-    private void configureListHorizontalWrap() {
-        list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        list.setVisibleRowCount(-1);
-   }
-
-    private void configureListBehavior() {
-        list.setCellRenderer((_, cell, _, _, _) -> render((Image) cell));
-        list.addMouseListener(mouseAdapter());
+    private void render(Graphics g, Paint paint) {
+        if (thumbnails.containsKey(paint.index())) drawImage(g, thumbnails.get(paint.index()), paint);
+        else drawEmpty(g, paint);
     }
 
-    private JScrollPane scrollPaneWithImages() {
-        JScrollPane scrollPane = new JScrollPane(list);
-        setScrollingPoliciesOn(scrollPane);
-        setAdaptativeBorderOn(scrollPane);
-        return scrollPane;
+    private void drawEmpty(Graphics g, Paint paint) {
+        g.setColor(Color.GRAY);
+        g.fillRect(paint.x(), paint.y(), paint.width(), paint.height());
+        submitLoad(paint);
     }
 
-    private static void setScrollingPoliciesOn(JScrollPane scrollPane) {
-        scrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
+    private void submitLoad(Paint paint) {
+        if (pending.add(paint.index())) loaderService.submit(new LoadTask(paint));
     }
 
-    private void setAdaptativeBorderOn(JScrollPane scrollPane) {
-        JViewport viewport = scrollPane.getViewport();
-        viewport.addComponentListener(resizableBorderOn(viewport));
+    private void drawImage(Graphics g, BufferedImage image, Paint paint) {
+        int xOffset = (paint.width() - image.getWidth()) / 2;
+        int yOffset = (paint.height() - image.getHeight()) / 2;
+        g.drawImage(image, paint.x() + xOffset, paint.y() + yOffset, null);
     }
 
-    private ComponentAdapter resizableBorderOn(JViewport viewport) {
-        return new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                list.doLayout();
-                list.setBorder(BorderFactory.createEmptyBorder(0, padding(viewport), 0, padding(viewport)));
-                list.revalidate(); list.repaint();
+    @Override
+    public void on(Scroll scroll) {
+        this.scrollListener = scroll;
+    }
+
+    @Override
+    public void on(Click click) {
+        this.clickListener = click;
+    }
+
+    @Override
+    public void on(Resize resize) {
+        this.resizeListener = resize;
+    }
+
+    @Override
+    public int width() {
+        return getWidth();
+    }
+
+    @Override
+    public int height() {
+        return getHeight();
+    }
+
+    private class MouseAdapter implements MouseListener, MouseWheelListener, ComponentListener {
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            clickListener.at(e.getX(), e.getY());
+        }
+
+        @Override
+        public void componentResized(ComponentEvent e) {
+            resizeListener.resized();
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+            scrollListener.offset(e.getWheelRotation() * 50);
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {}
+
+        @Override
+        public void mouseReleased(MouseEvent e) {}
+
+        @Override
+        public void mouseEntered(MouseEvent e) {}
+
+        @Override
+        public void mouseExited(MouseEvent e) {}
+
+        @Override
+        public void componentMoved(ComponentEvent e) {}
+
+        @Override
+        public void componentShown(ComponentEvent e) {}
+
+        @Override
+        public void componentHidden(ComponentEvent e) {}
+    }
+
+    private class LoadTask implements Runnable {
+
+        private final Paint paint;
+
+        private LoadTask(Paint paint) {
+            this.paint = paint;
+        }
+
+        @Override
+        public void run() {
+            try {
+                processAndCache();
+            } catch (Exception e) {
+                pending.remove(paint.index());
             }
-        };
-    }
+        }
 
-    private int padding(JViewport viewport) {
-        return viewport.getExtentSize().width % list.getCellBounds(0, 0).width / 2;
-    }
+        private void processAndCache() throws IOException {
+            BufferedImage scaled = scale(ImageIO.read(new ByteArrayInputStream(paint.loader().get())));
+            SwingUtilities.invokeLater(() -> updateCache(scaled));
+        }
 
-    private JPanel render(Image image) {
-        return panelWithBorderFor(galleryImageWith(image));
-    }
+        private BufferedImage scale(BufferedImage raw) {
+            Canvas fit = new Canvas(paint.width(), paint.height()).fit(raw.getWidth(), raw.getHeight());
+            return scale(raw, fit.width(), fit.height());
+        }
 
-    private MouseAdapter mouseAdapter() {
-        return new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                Image img = model.get(list.locationToIndex(e.getPoint()));
-                listener.actionPerformed(new ActionEvent(img, ActionEvent.ACTION_PERFORMED, "imageClick"));
-            }
-        };
-    }
+        private static BufferedImage scale(BufferedImage src, int w, int h) {
+            BufferedImage res = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = res.createGraphics();
+            g.setRenderingHint(KEY_INTERPOLATION, VALUE_INTERPOLATION_BILINEAR);
+            g.drawImage(src, 0, 0, w, h, null);
+            g.dispose();
+            return res;
+        }
 
-    private JPanel panelWithBorderFor(Component component) {
-        JPanel border = new JPanel();
-        border.add(component);
-        border.setOpaque(false);
-        border.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        return border;
-    }
-
-    private JLabel galleryImageWith(Image img) {
-        ImageIcon icon = icons.computeIfAbsent(img, i -> new ImageIcon(scale(i.bitmap())));
-        return labelWith(icon);
-    }
-
-    private JLabel labelWith(ImageIcon icon) {
-        JLabel label = new JLabel(icon);
-        label.setPreferredSize(new Dimension(100, 100));
-        label.setOpaque(false);
-        return label;
-    }
-
-    private java.awt.Image scale(byte[] bitmap) {
-        return scale(new ImageIcon(bitmap).getImage());
-    }
-
-    private java.awt.Image scale(java.awt.Image image) {
-        Canvas canvas = new Canvas(100, 100).fit(image.getWidth(null), image.getHeight(null));
-        return image.getScaledInstance(canvas.width(), canvas.height(), java.awt.Image.SCALE_SMOOTH);
+        private void updateCache(BufferedImage img) {
+            thumbnails.put(paint.index(), img);
+            pending.remove(paint.index());
+            repaint(paint.x(), paint.y(), paint.width(), paint.height());
+        }
     }
 }

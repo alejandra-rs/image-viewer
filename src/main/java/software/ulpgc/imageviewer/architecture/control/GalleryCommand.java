@@ -12,6 +12,6 @@ public class GalleryCommand implements Command {
 
     @Override
     public void execute() {
-        presenter.showAll();
+        presenter.show();
     }
 }

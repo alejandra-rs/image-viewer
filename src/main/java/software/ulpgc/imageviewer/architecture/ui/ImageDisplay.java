@@ -18,5 +18,4 @@ public interface ImageDisplay {
     }
 
     record Paint(byte[] bitmap, int offset) {}
-
 }

@@ -5,7 +5,6 @@ import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.HashMap;
@@ -36,10 +35,10 @@ public class Desktop extends JFrame {
         return this;
     }
 
-    public ActionListener switchToViewer(ImagePresenter presenter) {
-        return e -> onGalleryImageSelected(presenter, e);
+    public void switchToViewer(ImagePresenter presenter, Image image) {
+        presenter.show(image);
+        showCard("viewer");
     }
-
     private void setWindowProperties() {
         this.setTitle("Image Viewer");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -71,11 +70,6 @@ public class Desktop extends JFrame {
     private void showGallery() {
         showCard("gallery");
         commands.get("gallery").execute();
-    }
-
-    private void onGalleryImageSelected(ImagePresenter presenter, ActionEvent e) {
-        presenter.show((Image) (e.getSource()));
-        showCard("viewer");
     }
 
     private void showCard(String name) {

@@ -4,7 +4,6 @@ import software.ulpgc.imageviewer.application.FileImageStore;
 import software.ulpgc.imageviewer.architecture.control.GalleryCommand;
 import software.ulpgc.imageviewer.architecture.control.NextCommand;
 import software.ulpgc.imageviewer.architecture.control.PrevCommand;
-import software.ulpgc.imageviewer.architecture.model.Image;
 import software.ulpgc.imageviewer.architecture.model.ImageProvider;
 import software.ulpgc.imageviewer.architecture.presenter.GalleryPresenter;
 import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
@@ -12,6 +11,8 @@ import software.ulpgc.imageviewer.architecture.presenter.ImagePresenter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
+
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class Main {
@@ -22,25 +23,23 @@ public class Main {
         FlatLightLaf.setup();
 
         ImageProvider imageProvider = ImageProvider.with(new FileImageStore(root).images());
-
         SwingImageDisplay imageDisplay = new SwingImageDisplay();
-        SwingGalleryDisplay swingGalleryDisplay = new SwingGalleryDisplay();
+        SwingGalleryDisplay galleryDisplay = new SwingGalleryDisplay();
 
         ImagePresenter imagePresenter = new ImagePresenter(imageDisplay);
-        imagePresenter.show(imageProvider.first(Main::readImage));
+        Desktop desktop = Desktop.create();
 
+        GalleryPresenter galleryPresenter = new GalleryPresenter(
+                galleryDisplay,
+                Arrays.asList(imageProvider.all(Main::readImage)),
+                image -> desktop.switchToViewer(imagePresenter, image) // Swaps views
+        );
 
-        Desktop desktop = Desktop.create()
-                .put("next", new NextCommand(imagePresenter))
+        desktop.put("next", new NextCommand(imagePresenter))
                 .put("prev", new PrevCommand(imagePresenter))
-                .put("gallery", new GalleryCommand(new GalleryPresenter(swingGalleryDisplay, allImagesFrom(imageProvider))));
+                .put("gallery", new GalleryCommand(galleryPresenter));
 
-        swingGalleryDisplay.setListener(desktop.switchToViewer(imagePresenter));
-        desktop.generateUi(imageDisplay, swingGalleryDisplay).setVisible(true);
-    }
-
-    private static Image[] allImagesFrom(ImageProvider imageProvider) {
-        return imageProvider.all(Main::readImage);
+        desktop.generateUi(imageDisplay, galleryDisplay).setVisible(true);
     }
 
     private static byte[] readImage(String id) {
