@@ -11,7 +11,7 @@ public class CanvasTest {
     public void given_image_smaller_than_canvas_should_return_image_scaled() {
         Canvas canvas = Canvas.ofSize(200,200)
                 .fit(100,100);
-        assertThat(canvas).isEqualTo(Canvas.ofSize(200,200));
+        assertThat(canvas).isEqualTo(Canvas.ofSize(100,100));
     }
 
     @Test
