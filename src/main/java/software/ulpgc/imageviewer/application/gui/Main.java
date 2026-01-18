@@ -26,7 +26,7 @@ public class Main {
         SwingImageDisplay imageDisplay = new SwingImageDisplay();
         SwingGalleryDisplay galleryDisplay = new SwingGalleryDisplay();
 
-        ImagePresenter imagePresenter = new ImagePresenter(imageDisplay);
+        ImagePresenter imagePresenter = new ImagePresenter(imageDisplay, new SwingAnimation());
         Desktop desktop = Desktop.create();
 
         GalleryPresenter galleryPresenter = new GalleryPresenter(

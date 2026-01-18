@@ -11,8 +11,6 @@ public class NextCommand implements Command {
 
     @Override
     public void execute() {
-        imagePresenter.show(imagePresenter.image().next());
+        imagePresenter.glideToNext();
     }
-
-
 }

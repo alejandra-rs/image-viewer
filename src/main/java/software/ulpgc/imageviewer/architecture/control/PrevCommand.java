@@ -11,8 +11,6 @@ public class PrevCommand implements Command {
 
     @Override
     public void execute() {
-        imagePresenter.show(imagePresenter.image().previous());
+        imagePresenter.glideToPrev();
     }
-
-
 }
