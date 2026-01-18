@@ -32,7 +32,7 @@ public class Main {
         GalleryPresenter galleryPresenter = new GalleryPresenter(
                 galleryDisplay,
                 Arrays.asList(imageProvider.all(Main::readImage)),
-                image -> desktop.switchToViewer(imagePresenter, image) // Swaps views
+                image -> desktop.switchToViewer(imagePresenter, image)
         );
 
         desktop.put("next", new NextCommand(imagePresenter))

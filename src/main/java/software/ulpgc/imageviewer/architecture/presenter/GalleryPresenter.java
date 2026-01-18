@@ -44,6 +44,7 @@ public class GalleryPresenter {
 
     private void refresh() {
         if (display.width() == 0) return;
+        scrollY = min(scrollY, maxScroll());
         display.paint(visiblePaints());
     }
 
