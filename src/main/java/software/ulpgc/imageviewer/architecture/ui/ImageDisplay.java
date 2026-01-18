@@ -6,6 +6,8 @@ public interface ImageDisplay {
     void on(Released released);
 
     void paint(Paint... paints);
+    void zoom(double factor);
+    double zoom();
 
     int width();
 

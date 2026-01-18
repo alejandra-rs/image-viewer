@@ -48,9 +48,9 @@ public class ImageProvider {
         };
     }
 
-    public Image[] all(Function<String, byte[]> loader) {
+    public List<Image> all(Function<String, byte[]> loader) {
         return IntStream.range(0, images.size())
                         .mapToObj(i -> load(i, loader))
-                        .toArray(Image[]::new);
+                        .toList();
     }
 }

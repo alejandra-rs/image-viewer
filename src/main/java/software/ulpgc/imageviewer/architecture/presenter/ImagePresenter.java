@@ -8,6 +8,7 @@ import software.ulpgc.imageviewer.architecture.ui.ImageDisplay.*;
 import java.util.function.Consumer;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.max;
 
 public class ImagePresenter {
     private final ImageDisplay display;
@@ -23,15 +24,20 @@ public class ImagePresenter {
 
     public void show(Image image) {
         this.image = image;
-        this.display.paint(new ImageDisplay.Paint(image.bitmap(), 0));
+        display.zoom(1.0);
+        this.display.paint(new Paint(image.bitmap(), 0));
     }
 
     public void glideToPrev() {
-        animate(0, display.width());
+        animate(0, display.width(), display.zoom());
     }
 
     public void glideToNext() {
-        animate(0, -display.width());
+        animate(0, -display.width(), display.zoom());
+    }
+
+    public void zoom(double factor) {
+        display.zoom(display.zoom() * factor);
     }
 
     public Image image() {
@@ -43,23 +49,26 @@ public class ImagePresenter {
     }
 
     private void paintWhenReleased(int offset) {
-        animate(offset, targetOffset(offset));
+        if (offset == 0) return;
+        animate(offset, targetOffset(offset), display.zoom());
     }
 
-    private void animate(int start, int target) {
+    private void animate(int startPos, int targetPos, double startZoom) {
         animation.animate(75,
-                t -> nextStep(start, target, t),
-                () -> endTransition(target)
+                t -> nextStep(startPos, targetPos, startZoom, t),
+                () -> endTransition(targetPos)
         );
     }
 
     private Paint secondaryPaint(int offset) {
+        int imageGap =  max((int)(display.width() * display.zoom()), display.width());
         return offset < 0
-                ? new Paint(image.next().bitmap(), display.width() + offset)
-                : new Paint(image.previous().bitmap(), offset - display.width());
+                ? new Paint(image.next().bitmap(), offset + imageGap)
+                : new Paint(image.previous().bitmap(), offset - imageGap);
     }
 
-    private void nextStep(int start, int target, double t) {
+    private void nextStep(int start, int target, double startZoom, double t) {
+        display.zoom(startZoom + (1.0 - startZoom) * t);
         int currentPos = (int) (start + (target - start) * t);
         display.paint(new Paint(image.bitmap(), currentPos), secondaryPaint(currentPos));
     }
@@ -73,8 +82,13 @@ public class ImagePresenter {
     }
 
     private void endTransition(int offset) {
-        if (isImageSwitching(offset)) image = offset < 0 ? image.next() : image.previous();
+        if (isImageSwitching(offset)) adaptToSwitching(offset);
         display.paint(new Paint(image.bitmap(), 0));
+    }
+
+    private void adaptToSwitching(int offset) {
+        image = offset < 0 ? image.next() : image.previous();
+        display.zoom(1.0);
     }
 
     public interface Animation {

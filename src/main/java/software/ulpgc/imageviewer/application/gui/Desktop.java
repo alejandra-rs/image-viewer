@@ -60,10 +60,31 @@ public class Desktop extends JFrame {
     }
 
     private JPanel toolbar() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(centerButtons());
+        panel.add(zoomButtons(), EAST);
+        panel.add(westDummy(), WEST);
+        return panel;
+    }
+
+    private JPanel centerButtons() {
         JPanel panel = new JPanel();
         panel.add(buttonWith("prev.png", _ -> commands.get("prev").execute()));
         panel.add(buttonWith("home.png", _ -> showGallery()));
         panel.add(buttonWith("next.png", _ -> commands.get("next").execute()));
+        return panel;
+    }
+
+    private JPanel zoomButtons() {
+        JPanel panel = new JPanel();
+        panel.add(buttonWith("zoom-in.png", _ -> commands.get("zoomIn").execute()));
+        panel.add(buttonWith("zoom-out.png", _ -> commands.get("zoomOut").execute()));
+        return panel;
+    }
+
+    private JPanel westDummy() {
+        JPanel panel = new JPanel();
+        panel.setPreferredSize(zoomButtons().getPreferredSize());
         return panel;
     }
 
