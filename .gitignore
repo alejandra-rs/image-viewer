@@ -3,7 +3,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-images/
+/images/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
