@@ -7,9 +7,13 @@ Desktop image browser built with **Java Swing**, designed with the **Model-View-
 The application operates both with buttons and gestures in two different scenarios:
 
 1.  **Gallery Mode:** Browse through all the images loaded. Click on an image to open it on the viewer.
+<br></br>
 ![Gallery Mode](docs/images/gallery-mode.png)
+<br></br>
 2.  **Image Viewer:** Watch images close-up. Zoom and pan on details if desired, navigate through to previous and next images.
+<br></br>
 ![Image Viewer Mode](docs/images/image-viewer.png)
+<br></br>
 ---
 
 ## Architecture - Model View Presenter
